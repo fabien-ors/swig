@@ -1604,8 +1604,16 @@ void R::dispatchFunctionNew(Node *n) {
       // Default value given for the argument:
       // Dump C++ code in R !!! Not always possible !!!
       // => Do my best to convert
+      
+      // Particular case of '::' operator replaced by '_'
+      // TODO : Handle static variables that are transformed into functions by SWIG
+      Replaceall(pvalue, "::", "_");
+
+      // Vectors
       Replaceall(pvalue, "{", "c(");
       Replaceall(pvalue, "}", ")");
+      
+      // Constants
       Replaceall(pvalue, "false", "FALSE");
       Replaceall(pvalue, "true", "TRUE");
       Replaceall(pvalue, "nullptr", "NULL");
@@ -2254,7 +2262,13 @@ int R::functionWrapper(Node *n) {
       Replaceall(pvalue, "false", "FALSE");
       Replaceall(pvalue, "true", "TRUE");
       Replaceall(pvalue, "nullptr", "NULL");
-      
+      // Test particular case of a static variable in a class
+      // Example: EMyEnum::CASE_1 => EMyEnum_CASE_1()
+      String* pvc = Copy(pvalue);
+      Replaceall(pvalue, "::", "_");
+      if (!Equal(pvc, pvalue))
+        Append(pvalue, "()");
+        
       if (inFirstArg)
         Printf(sfun->def, "%s = %s", name, pvalue);
       else
