@@ -1080,8 +1080,16 @@ int R::OutputMemberReferenceMethod(String *className, int isSet, List *memberLis
     Printf(f->code, ");\n");
   }
 
-  Printv(f->code, ";", tab8, "idx = pmatch(name, names(accessorFuns));\n", tab8, "if(is.na(idx)) \n", tab8, tab4, NIL);
-  Printf(f->code, "return(callNextMethod(x, name%s));\n", isSet ? ", value" : "");
+  Printv(f->code, ";", tab8,
+// ============================== [FO] START
+	 "idx = match(name, names(accessorFuns));\n",
+//	 "idx = pmatch(name, names(accessorFuns));\n",
+// ============================== [FO] END
+	 tab8,
+	 "if(is.na(idx)) \n",
+	 tab8, tab4, NIL);
+  Printf(f->code, "return(callNextMethod(x, name%s));\n",
+	 isSet ? ", value" : "");
   Printv(f->code, tab8, "f = accessorFuns[[idx]];\n", NIL);
   if (isSet) {
     Printv(f->code, tab8, "f(x, value);\n", NIL);
@@ -1553,6 +1561,7 @@ List *R::Swig_overload_rank(Node *n, bool script_lang_wrapping) {
   }
   return result;
 }
+
 
 // ============================== [FO] START
 #include <vector>
