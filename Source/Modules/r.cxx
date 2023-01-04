@@ -1065,7 +1065,10 @@ int R::OutputMemberReferenceMethod(String *className, int isSet,
   }
 
   Printv(f->code, ";", tab8,
-	 "idx = pmatch(name, names(accessorFuns));\n",
+// ============================== [FO] START
+	 "idx = match(name, names(accessorFuns));\n",
+//	 "idx = pmatch(name, names(accessorFuns));\n",
+// ============================== [FO] END
 	 tab8,
 	 "if(is.na(idx)) \n",
 	 tab8, tab4, NIL);
@@ -1549,6 +1552,7 @@ List * R::Swig_overload_rank(Node *n,
   }
   return result;
 }
+
 
 // ============================== [FO] START
 #include <vector>
