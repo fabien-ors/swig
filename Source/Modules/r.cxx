@@ -311,6 +311,9 @@ protected:
   List* filterMemberList(List *class_member_function_types, List *class_member_other, String *R_MEMBER, bool equal);
 
 protected:
+// ============================== [FO] START
+  bool original;
+// ============================== [FO] END
   bool copyStruct;
   bool memoryProfile;
   bool aggressiveGc;
@@ -387,6 +390,9 @@ protected:
 };
 
 R::R() :
+// ============================== [FO] START
+  original(false),
+// ============================== [FO] END
   copyStruct(false),
   memoryProfile(false),
   aggressiveGc(false),
@@ -1064,14 +1070,21 @@ int R::OutputMemberReferenceMethod(String *className, int isSet,
     Printf(f->code, ");\n");
   }
 
-  Printv(f->code, ";", tab8,
 // ============================== [FO] START
-	 "idx = match(name, names(accessorFuns));\n",
-//	 "idx = pmatch(name, names(accessorFuns));\n",
+  if (original)
+    Printv(f->code, ";", tab8,
+	   "idx = pmatch(name, names(accessorFuns));\n",
+	   tab8,
+	   "if(is.na(idx)) \n",
+	   tab8, tab4, NIL);
+	else
+    Printv(f->code, ";", tab8,
+	   "idx = match(name, names(accessorFuns));\n",
+	   tab8,
+	   "if(is.na(idx)) \n",
+	   tab8, tab4, NIL);
 // ============================== [FO] END
-	 tab8,
-	 "if(is.na(idx)) \n",
-	 tab8, tab4, NIL);
+
   Printf(f->code, "return(callNextMethod(x, name%s));\n",
 	 isSet ? ", value" : "");
   Printv(f->code, tab8, "f = accessorFuns[[idx]];\n", NIL);
@@ -1561,7 +1574,7 @@ void R::dispatchFunction(Node *n) {
   String *nodeType = Getattr(n, "nodeType");
   bool constructor = (!Cmp(nodeType, "constructor"));
 
-  if (constructor)
+  if (constructor || original)
     dispatchFunctionOld(n);
   else
     dispatchFunctionNew(n);
@@ -1604,35 +1617,49 @@ void R::dispatchFunctionNew(Node *n) {
       Swig_print_node(p);
     String* pname = Getattr(p, "name");
     String* pvalue = Getattr(p, "value");
+    String* mypvalue = NULL;
     if (pvalue != NULL) {
       // Default value given for the argument:
       // Dump C++ code in R !!! Not always possible !!!
       // => Do my best to convert
-      
-      // Particular case of '::' operator replaced by '_'
-      // TODO : Handle static variables that are transformed into functions by SWIG
-      Replaceall(pvalue, "::", "_");
 
-      // Vectors
-      Replaceall(pvalue, "{", "c(");
-      Replaceall(pvalue, "}", ")");
-      
-      // Constants
-      Replaceall(pvalue, "false", "FALSE");
-      Replaceall(pvalue, "true", "TRUE");
-      Replaceall(pvalue, "nullptr", "NULL");
+      // Pure enums (transform to character)
+      String* ptype = Getattr(p, "tmap:scoercein:match_type");
+      if (ptype != NULL && Strcmp(ptype, "r.enum SWIGTYPE") == 0)
+      {
+        mypvalue = NewString("");
+        Printf(mypvalue, "\"%s\"", pvalue);
+      }
+      else
+      {
+        // Copy C++ default value
+        mypvalue = Copy(pvalue);
+
+        // Particular case of '::' operator replaced by '_'
+        // TODO : Handle static variables that are transformed into functions by SWIG
+        Replaceall(mypvalue, "::", "_");
+
+        // Vectors
+        Replaceall(mypvalue, "{", "c(");
+        Replaceall(mypvalue, "}", ")");
+        
+        // Constants
+        Replaceall(mypvalue, "false", "FALSE");
+        Replaceall(mypvalue, "true", "TRUE");
+        Replaceall(mypvalue, "nullptr", "NULL");
+      }
     }
     if (j < num_arguments - 1) {
       // Not the last argument
-      if (pvalue != NULL)
-        Printf(f->def, "%s = %s,", pname, pvalue);
+      if (mypvalue != NULL)
+        Printf(f->def, "%s = %s,", pname, mypvalue);
       else
         Printf(f->def, "%s,", pname);
     }
     else {
       // Last argument (no comma)
-      if (pvalue != NULL)
-        Printf(f->def, "%s = %s", pname, pvalue);
+      if (mypvalue != NULL)
+        Printf(f->def, "%s = %s", pname, mypvalue);
       else
         Printf(f->def, "%s", pname);
     }
@@ -1640,7 +1667,7 @@ void R::dispatchFunctionNew(Node *n) {
   }
   Printv(f->def, ") {", NIL);
   
-  // Call the first dispatch function (write all arguments)
+  // Call the first dispatch function having the maximum number of arguments (usually SWIG_0) and write all arguments values
   Printf(f->code, "%s%s(", sfname, overname);
   for (p = pi, j = 0 ; j < num_arguments ; j++) {
     if (debugMode)
@@ -3073,6 +3100,11 @@ void R::main(int argc, char *argv[]) {
       inCPlusMode = true;
       Swig_mark_arg(i);
       Printf(s_classes, "setClass('C++Reference', contains = 'ExternalReference')\n");
+// ============================== [FO] START
+    } else if(!strcmp(argv[i], "-original")) {
+      original = true;
+      Swig_mark_arg(i);
+// ============================== [FO] END
     } else if(!strcmp(argv[i], "-debug")) {
       debugMode = true;
       Swig_mark_arg(i);
