@@ -1627,8 +1627,13 @@ void R::dispatchFunctionNew(Node *n) {
       String* ptype = Getattr(p, "tmap:scoercein:match_type");
       if (ptype != NULL && Strcmp(ptype, "r.enum SWIGTYPE") == 0)
       {
-        mypvalue = NewString("");
-        Printf(mypvalue, "\"%s\"", pvalue);
+        // If '::' in the value, only keep last enum value
+	      while (Strstr(pvalue, "::")) {
+	        //XXX need to free.
+	        pvalue = NewStringf("%s", Strchr(pvalue, ':') + 2);
+	      }
+	      // Add double quotes
+        mypvalue = NewStringf("\"%s\"", pvalue);
       }
       else
       {
