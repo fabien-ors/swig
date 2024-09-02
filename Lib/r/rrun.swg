@@ -339,7 +339,7 @@ SWIG_R_ConvertPtrAndOwn(SEXP obj, void **ptr, swig_type_info *ty, int flags, int
       if (ptr) *ptr = vptr;
     } else {
       // =================================== [FO] START
-      if (to <= (void*)0x1) {
+      if (to <= (void*)0x1 || strlen(to->str) == 0) {
         Rf_error("Wrong type for destination argument");
         return SWIG_TypeError;
       }
