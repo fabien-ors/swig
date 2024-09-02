@@ -326,12 +326,24 @@ SWIG_R_ConvertPtrAndOwn(SEXP obj, void **ptr, swig_type_info *ty, int flags, int
   }
 
   vptr = R_ExternalPtrAddr(obj);
+  // =================================== [FO] START
+  if (vptr <= (void*)0x1) {
+    Rf_error("Wrong type for argument");
+    return SWIG_TypeError;
+  }
+  // =================================== [FO] END
   if (ty) {
     swig_type_info *to = (swig_type_info*) 
       R_ExternalPtrAddr(R_ExternalPtrTag(obj));
     if (to == ty) {
       if (ptr) *ptr = vptr;
     } else {
+      // =================================== [FO] START
+      if (to <= (void*)0x1) {
+        Rf_error("Wrong type for destination argument");
+        return SWIG_TypeError;
+      }
+      // =================================== [FO] END
       swig_cast_info *tc = SWIG_TypeCheck(to->name,ty);
       int newmemory = 0;
       if (ptr) {
@@ -393,6 +405,12 @@ RSwigPacked_UnpackData(SEXP obj, void *ptr, size_t size)
 {
     RSwigPacked *sobj = 
         (RSwigPacked *)R_ExternalPtrAddr(obj);
+    // =================================== [FO] START
+    if (sobj <= (RSwigPacked*)0x1) {
+      Rf_error("Wrong type for argument");
+      return nullptr;
+    }
+    // =================================== [FO] END
     if (sobj->size != size) return 0;
     memcpy(ptr, sobj->pack, size);
     return sobj->ty;
