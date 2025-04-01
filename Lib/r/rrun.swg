@@ -338,13 +338,14 @@ SWIG_R_ConvertPtrAndOwn(SEXP obj, void **ptr, swig_type_info *ty, int flags, int
     if (to == ty) {
       if (ptr) *ptr = vptr;
     } else {
+      swig_cast_info *tc;
       // =================================== [FO] START
-      if (to <= (void*)0x1 || strlen(to->str) == 0) {
+      if ((void*)to <= (void*)0x1 || strlen(to->str) == 0) {
         Rf_error("Wrong type for destination argument");
         return SWIG_TypeError;
       }
       // =================================== [FO] END
-      swig_cast_info *tc = SWIG_TypeCheck(to->name,ty);
+      tc = SWIG_TypeCheck(to->name,ty);
       if (ptr) {
         int newmemory = 0;
         *ptr = SWIG_TypeCast(tc, vptr, &newmemory);
@@ -407,7 +408,7 @@ RSwigPacked_UnpackData(SEXP obj, void *ptr, size_t size)
     // =================================== [FO] START
     if (sobj <= (RSwigPacked*)0x1) {
       Rf_error("Wrong type for argument");
-      return nullptr;
+      return NULL;
     }
     // =================================== [FO] END
     if (sobj->size != size) return 0;
