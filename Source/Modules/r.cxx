@@ -1959,7 +1959,7 @@ void R::dispatchFunctionFuture(Node *n) {
 	  if (tmcode) {
 	    if (!SwigType_ispointer(Getattr(p, "type")))
 	      Printf(tmcode, " && length($arg) == 1");
-	    Swig_warning(WARN_R_MISSING_RTYPECHECK_TYPEMAP, input_file, line_number,
+	    Swig_warning(WARN_R_TYPEMAP_RTYPECHECK_UNDEF, input_file, line_number,
 			 "Optional rtypecheck code is deprecated. Add the following typemap to fix as the next version of SWIG will not work without it: %%typemap(\"rtypecheck\") %s %%{ %s %%}\n",
 			 SwigType_str(Getattr(p, "type"), 0), tmcode);
 	    String *tmp_arg = NewStringf("argv[[%d]]", j+1);
