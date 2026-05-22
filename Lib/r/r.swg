@@ -75,7 +75,7 @@ SWIG_InitializeModule(0);
 {
 { int _rswigi;
   int _rswiglen = LENGTH($input);
-  $1 = %static_cast(calloc(sizeof($1_basetype), _rswiglen), $1_ltype);
+  $1 = %static_cast(calloc(_rswiglen, sizeof($1_basetype)), $1_ltype);
   for (_rswigi=0; _rswigi< _rswiglen; _rswigi++) {
      $1[_rswigi] = INTEGER($input)[_rswigi];
   }
@@ -88,7 +88,7 @@ SWIG_InitializeModule(0);
 {
 {  int _rswigi;
   int _rswiglen = LENGTH($input);
-  $1 = %static_cast(calloc(sizeof($1_basetype), _rswiglen), $1_ltype);
+  $1 = %static_cast(calloc(_rswiglen, sizeof($1_basetype)), $1_ltype);
   for (_rswigi=0; _rswigi<_rswiglen; _rswigi++) {
      $1[_rswigi] = REAL($input)[_rswigi];
   }
