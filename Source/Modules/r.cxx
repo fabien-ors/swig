@@ -228,11 +228,11 @@ public:
   int top(Node *n);
 
   void dispatchFunction(Node *n);
-// =================================== [FO] START
+  // =================================== [FO] START
   void dispatchFunctionNew(Node *n);
   void dispatchFunctionOld(Node *n);
   void dispatchFunctionFuture(Node *n);
-// =================================== [FO] END
+  // =================================== [FO] END
   int functionWrapper(Node *n);
   int constantWrapper(Node *n);
   int variableWrapper(Node *n);
@@ -340,9 +340,9 @@ protected:
   List *filterMemberList(List *class_member_function_types, List *class_member_other, String *R_MEMBER, bool equal);
 
 protected:
-// ============================== [FO] START
+  // ============================== [FO] START
   bool original;
-// ============================== [FO] END
+  // ============================== [FO] END
   bool copyStruct;
   bool memoryProfile;
   bool aggressiveGc;
@@ -418,9 +418,9 @@ protected:
 };
 
 R::R() :
-// ============================== [FO] START
+  // ============================== [FO] START
   original(false),
-// ============================== [FO] END
+  // ============================== [FO] END
   copyStruct(false),
   memoryProfile(false),
   aggressiveGc(false),
@@ -1086,23 +1086,14 @@ int R::OutputMemberReferenceMethod(String *className, int isSet, List *memberLis
     Printf(f->code, ");\n");
   }
 
-// ============================== [FO] START
+  // ============================== [FO] START
   if (original)
-    Printv(f->code, ";", tab8,
-	   "idx = pmatch(name, names(accessorFuns));\n",
-	   tab8,
-	   "if(is.na(idx)) \n",
-	   tab8, tab4, NIL);
-	else
-    Printv(f->code, ";", tab8,
-	   "idx = match(name, names(accessorFuns));\n",
-	   tab8,
-	   "if(is.na(idx)) \n",
-	   tab8, tab4, NIL);
-// ============================== [FO] END
+    Printv(f->code, ";", tab8, "idx = pmatch(name, names(accessorFuns));\n", tab8, "if(is.na(idx)) \n", tab8, tab4, NIL);
+  else
+    Printv(f->code, ";", tab8, "idx = match(name, names(accessorFuns));\n", tab8, "if(is.na(idx)) \n", tab8, tab4, NIL);
+  // ============================== [FO] END
 
-  Printf(f->code, "return(callNextMethod(x, name%s));\n",
-	 isSet ? ", value" : "");
+  Printf(f->code, "return(callNextMethod(x, name%s));\n", isSet ? ", value" : "");
   Printv(f->code, tab8, "f = accessorFuns[[idx]];\n", NIL);
   if (isSet) {
     Printv(f->code, tab8, "f(x, value);\n", NIL);
@@ -1575,7 +1566,6 @@ List *R::Swig_overload_rank(Node *n, bool script_lang_wrapping) {
   return result;
 }
 
-
 // ============================== [FO] START
 #include <vector>
 
@@ -1588,8 +1578,6 @@ void R::dispatchFunction(Node *n) {
   else
     dispatchFunctionNew(n);
 }
-
-
 
 void R::dispatchFunctionNew(Node *n) {
   String *nodeType = Getattr(n, "nodeType");
@@ -1608,44 +1596,41 @@ void R::dispatchFunctionNew(Node *n) {
     Swig_print_node(n);
   }
   List *dispatch = Swig_overload_rank(n, true);
-  int   nfunc = Len(dispatch);
+  int nfunc = Len(dispatch);
 
   // Get first dispatch function (the one with max number of arguments)
-  Node *ni = Getitem(dispatch, nfunc-1);
-  String *overname = Getattr(ni,"sym:overname");
+  Node *ni = Getitem(dispatch, nfunc - 1);
+  String *overname = Getattr(ni, "sym:overname");
   // Get its parameters
-  Parm *pi = Getattr(ni,"wrap:parms");
+  Parm *pi = Getattr(ni, "wrap:parms");
   int num_arguments = emit_num_arguments(pi);
   // Create the entry point function
   Printf(f->def, "`%s` <- function(", sfname);
   // Parse each parameter (build arguments list)
-  Parm* p;
+  Parm *p;
   int j;
-  for (p = pi, j = 0 ; j < num_arguments ; j++) {
+  for (p = pi, j = 0; j < num_arguments; j++) {
     if (debugMode)
       Swig_print_node(p);
-    String* pname = Getattr(p, "name");
-    String* pvalue = Getattr(p, "value");
-    String* mypvalue = NULL;
+    String *pname = Getattr(p, "name");
+    String *pvalue = Getattr(p, "value");
+    String *mypvalue = NULL;
     if (pvalue != NULL) {
       // Default value given for the argument:
       // Dump C++ code in R !!! Not always possible !!!
       // => Do my best to convert
 
       // Pure enums (transform to character)
-      String* ptype = Getattr(p, "tmap:scoercein:match_type");
-      if (ptype != NULL && Strcmp(ptype, "r.enum SWIGTYPE") == 0)
-      {
+      String *ptype = Getattr(p, "tmap:scoercein:match_type");
+      if (ptype != NULL && Strcmp(ptype, "r.enum SWIGTYPE") == 0) {
         // If '::' in the value, only keep last enum value
-	      while (Strstr(pvalue, "::")) {
-	        //XXX need to free.
-	        pvalue = NewStringf("%s", Strchr(pvalue, ':') + 2);
-	      }
-	      // Add double quotes
+        while (Strstr(pvalue, "::")) {
+          // XXX need to free.
+          pvalue = NewStringf("%s", Strchr(pvalue, ':') + 2);
+        }
+        // Add double quotes
         mypvalue = NewStringf("\"%s\"", pvalue);
-      }
-      else
-      {
+      } else {
         // Copy C++ default value
         mypvalue = Copy(pvalue);
 
@@ -1656,7 +1641,7 @@ void R::dispatchFunctionNew(Node *n) {
         // Vectors
         Replaceall(mypvalue, "{", "c(");
         Replaceall(mypvalue, "}", ")");
-        
+
         // Constants
         Replaceall(mypvalue, "false", "FALSE");
         Replaceall(mypvalue, "true", "TRUE");
@@ -1669,8 +1654,7 @@ void R::dispatchFunctionNew(Node *n) {
         Printf(f->def, "%s = %s,", pname, mypvalue);
       else
         Printf(f->def, "%s,", pname);
-    }
-    else {
+    } else {
       // Last argument (no comma)
       if (mypvalue != NULL)
         Printf(f->def, "%s = %s", pname, mypvalue);
@@ -1680,15 +1664,15 @@ void R::dispatchFunctionNew(Node *n) {
     p = Getattr(p, "tmap:in:next");
   }
   Printv(f->def, ") {", NIL);
-  
+
   // Call the first dispatch function having the maximum number of arguments (usually SWIG_0) and write all arguments values
   Printf(f->code, "%s%s(", sfname, overname);
-  for (p = pi, j = 0 ; j < num_arguments ; j++) {
+  for (p = pi, j = 0; j < num_arguments; j++) {
     if (debugMode)
       Swig_print_node(p);
-    String* pname = Getattr(p, "name");
+    String *pname = Getattr(p, "name");
     if (j < num_arguments - 1)
-      Printf(f->code, "%s,", pname); // Not the last argument
+      Printf(f->code, "%s,", pname);  // Not the last argument
     else
       Printf(f->code, "%s", pname);  // Last argument (no comma)
     p = Getattr(p, "tmap:in:next");
@@ -1802,7 +1786,6 @@ void R::dispatchFunctionOld(Node *n) {
   DelWrapper(f);
 }
 
-
 // ============================== [FO] START
 
 // Future work not yet available
@@ -1819,45 +1802,39 @@ void R::dispatchFunctionFuture(Node *n) {
   if (constructor)
     Replace(sfname, "new_", "", DOH_REPLACE_FIRST);
 
-  Printf(f->def,
-	 "`%s` <- function(...) {", sfname);
+  Printf(f->def, "`%s` <- function(...) {", sfname);
   if (debugMode) {
     Swig_print_node(n);
   }
   List *dispatch = Swig_overload_rank(n, true);
-  int   nfunc = Len(dispatch);
-  
-    Printv(f->code,
-         "argv <- list(...);\n",
-         "argtypes <- mapply(class, argv);\n",
-         "argc <- length(argtypes);\n",
-         "argn <- names(argv);\n",
-         "f <- NULL;\n", NIL);
-         
+  int nfunc = Len(dispatch);
+
+  Printv(f->code, "argv <- list(...);\n", "argtypes <- mapply(class, argv);\n", "argc <- length(argtypes);\n", "argn <- names(argv);\n", "f <- NULL;\n", NIL);
+
   //==============================
-  //Printf(f->code,"cat('argc=',argc,'\\n');\n");
-  //Printf(f->code,"lapply(argv, function(x) cat('argv=',x,'\\n'));\n");
-  //Printf(f->code,"cat('length(argn)=',length(argn),'\\n');\n");
-  //Printf(f->code,"lapply(argn, function(x) cat('argn=',x,'\\n'));\n");
+  // Printf(f->code,"cat('argc=',argc,'\\n');\n");
+  // Printf(f->code,"lapply(argv, function(x) cat('argv=',x,'\\n'));\n");
+  // Printf(f->code,"cat('length(argn)=',length(argn),'\\n');\n");
+  // Printf(f->code,"lapply(argn, function(x) cat('argn=',x,'\\n'));\n");
   Printf(f->code, "all_args = list(\n");
   std::vector<int> req_nargs;
-  for (int i=0; i < nfunc; i++) {
-    Node *ni = Getitem(dispatch,i);
-    Parm *pi = Getattr(ni,"wrap:parms");
+  for (int i = 0; i < nfunc; i++) {
+    Node *ni = Getitem(dispatch, i);
+    Parm *pi = Getattr(ni, "wrap:parms");
     int num_arguments = emit_num_arguments(pi);
-    String *overname = Getattr(ni,"sym:overname");
+    String *overname = Getattr(ni, "sym:overname");
     Printf(f->code, "  %s%s = c(", sfname, overname);
-    Parm* p;
+    Parm *p;
     int j;
     int req_narg = 0;
-    for (p = pi, j = 0 ; j < num_arguments ; j++) {
-      String* pname = Getattr(p, "name");
+    for (p = pi, j = 0; j < num_arguments; j++) {
+      String *pname = Getattr(p, "name");
       Printf(f->code, "\"%s\"", pname);
       if (j < num_arguments - 1)
         Printf(f->code, ", ");
-      String* pvalue = Getattr(p, "value");
-      if (pvalue == NULL) // TODO : pvalue == NULL or if conversion of pvalue has failed! 
-        req_narg++; 
+      String *pvalue = Getattr(p, "value");
+      if (pvalue == NULL)  // TODO : pvalue == NULL or if conversion of pvalue has failed!
+        req_narg++;
       p = Getattr(p, "tmap:in:next");
     }
     Printf(f->code, ")");
@@ -1868,29 +1845,29 @@ void R::dispatchFunctionFuture(Node *n) {
   Printf(f->code, ");\n");
 
   Printf(f->code, "req_nargs = list(");
-  for (int i=0; i < nfunc; i++) {
+  for (int i = 0; i < nfunc; i++) {
     Printf(f->code, "%d", req_nargs[i]);
     if (i < nfunc - 1)
       Printf(f->code, ",");
   }
   Printf(f->code, ");\n");
 
-  Printf(f->code,"if (length(argn) <= 0) {\n");
+  Printf(f->code, "if (length(argn) <= 0) {\n");
   // No argument name given
   //==============================
-  
+
   Printf(f->code, "# dispatch functions %d\n", nfunc);
   int cur_args = -1;
   bool first_compare = true;
-  for (int i=0; i < nfunc; i++) {
-    Node *ni = Getitem(dispatch,i);
-    Parm *pi = Getattr(ni,"wrap:parms");
+  for (int i = 0; i < nfunc; i++) {
+    Node *ni = Getitem(dispatch, i);
+    Parm *pi = Getattr(ni, "wrap:parms");
     int num_arguments = emit_num_arguments(pi);
 
-    String *overname = Getattr(ni,"sym:overname");
+    String *overname = Getattr(ni, "sym:overname");
     if (cur_args != num_arguments) {
       if (cur_args != -1) {
-	Printv(f->code, "} else ", NIL);
+        Printv(f->code, "} else ", NIL);
       }
       Printf(f->code, "if (argc == %d) {", num_arguments);
       cur_args = num_arguments;
@@ -1900,79 +1877,83 @@ void R::dispatchFunctionFuture(Node *n) {
     int j;
     if (num_arguments > 0) {
       if (!first_compare) {
-	Printv(f->code, " else ", NIL);
+        Printv(f->code, " else ", NIL);
       } else {
-	first_compare = false;
+        first_compare = false;
       }
       Printv(f->code, "if (", NIL);
-      for (p = pi, j = 0 ; j < num_arguments ; j++) {
-	if (debugMode) {
-	  Swig_print_node(p);
-	}
-	String *tm = Swig_typemap_lookup("rtype", p, "", 0);
-	if (tm) {
-	  replaceRClass(tm, Getattr(p, "type"));
-	}
+      for (p = pi, j = 0; j < num_arguments; j++) {
+        if (debugMode) {
+          Swig_print_node(p);
+        }
+        String *tm = Swig_typemap_lookup("rtype", p, "", 0);
+        if (tm) {
+          replaceRClass(tm, Getattr(p, "type"));
+        }
 
-	String *tmcheck = Swig_typemap_lookup("rtypecheck", p, "", 0);
-	if (tmcheck) {
-	  String *tmp_argtype = NewStringf("argtypes[%d]", j+1);
-	  Replaceall(tmcheck, "$argtype", tmp_argtype);
-	  String *tmp_arg = NewStringf("argv[[%d]]", j+1);
-	  Replaceall(tmcheck, "$arg", tmp_arg);
-	  replaceRClass(tmcheck, Getattr(p, "type"));
-	  if (debugMode) {
-	    Printf(stdout, "<rtypecheck>%s\n", tmcheck);
-	  }
-	  if (num_arguments == 1) {
-	    Printf(f->code, "%s", tmcheck);
-	  } else {
-	    Printf(f->code, "%s(%s)", j == 0 ? "" : " && ", tmcheck);
-	  }
-	  p = Getattr(p, "tmap:in:next");
-	  Delete(tmp_arg);
-	  Delete(tmp_argtype);
-	  continue;
-	}
-	// Below should be migrated into rtypecheck typemaps
-	// Preparation for this has started by warning in swig-4.1.1 for "numeric", "integer", "character" typemaps
-	// For swig-4.2: remove the code block below and uncomment typemaps marked 'Replacement rtypecheck typemaps' in rtype.swg.
-	// There is a slight difference in output as the typemap approach fixes some bugs due to a missing type resolution below
-	if (tm) {
-	  String *tmcode = NULL;
-	  Printf(f->code, "%s", j == 0 ? "" : " && ");
-	  if (num_arguments != 1)
-	    Printf(f->code, "(");
-	  Printf(f->code, " ");
-	  if (Strcmp(tm, "numeric") == 0) {
-	    tmcode = NewString("is.numeric($arg)");
-	  } else if (Strcmp(tm, "integer") == 0) {
-	    tmcode = NewString("(is.integer($arg) || is.numeric($arg))");
-	  } else if (Strcmp(tm, "character") == 0) {
-	    tmcode = NewString("is.character($arg)");
-	  } else {
-	    if (SwigType_ispointer(Getattr(p, "type")))
-	      Printf(f->code, "extends(argtypes[%d], '%s') || is.null(argv[[%d]])", j+1, tm, j+1);
-	    else
-	      Printf(f->code, "extends(argtypes[%d], '%s') && length(argv[[%d]]) == 1", j+1, tm, j+1);
-	  }
-	  if (tmcode) {
-	    if (!SwigType_ispointer(Getattr(p, "type")))
-	      Printf(tmcode, " && length($arg) == 1");
-	    Swig_warning(WARN_R_TYPEMAP_RTYPECHECK_UNDEF, input_file, line_number,
-			 "Optional rtypecheck code is deprecated. Add the following typemap to fix as the next version of SWIG will not work without it: %%typemap(\"rtypecheck\") %s %%{ %s %%}\n",
-			 SwigType_str(Getattr(p, "type"), 0), tmcode);
-	    String *tmp_arg = NewStringf("argv[[%d]]", j+1);
-	    Replaceall(tmcode, "$arg", tmp_arg);
-	    Printv(f->code, tmcode, NIL);
-	    Delete(tmp_arg);
-	  }
-	  Printf(f->code, " ");
-	  if (num_arguments != 1)
-	    Printf(f->code, ")");
-	  Delete(tmcode);
-	}
-	p = Getattr(p, "tmap:in:next");
+        String *tmcheck = Swig_typemap_lookup("rtypecheck", p, "", 0);
+        if (tmcheck) {
+          String *tmp_argtype = NewStringf("argtypes[%d]", j + 1);
+          Replaceall(tmcheck, "$argtype", tmp_argtype);
+          String *tmp_arg = NewStringf("argv[[%d]]", j + 1);
+          Replaceall(tmcheck, "$arg", tmp_arg);
+          replaceRClass(tmcheck, Getattr(p, "type"));
+          if (debugMode) {
+            Printf(stdout, "<rtypecheck>%s\n", tmcheck);
+          }
+          if (num_arguments == 1) {
+            Printf(f->code, "%s", tmcheck);
+          } else {
+            Printf(f->code, "%s(%s)", j == 0 ? "" : " && ", tmcheck);
+          }
+          p = Getattr(p, "tmap:in:next");
+          Delete(tmp_arg);
+          Delete(tmp_argtype);
+          continue;
+        }
+        // Below should be migrated into rtypecheck typemaps
+        // Preparation for this has started by warning in swig-4.1.1 for "numeric", "integer", "character" typemaps
+        // For swig-4.2: remove the code block below and uncomment typemaps marked 'Replacement rtypecheck typemaps' in rtype.swg.
+        // There is a slight difference in output as the typemap approach fixes some bugs due to a missing type resolution below
+        if (tm) {
+          String *tmcode = NULL;
+          Printf(f->code, "%s", j == 0 ? "" : " && ");
+          if (num_arguments != 1)
+            Printf(f->code, "(");
+          Printf(f->code, " ");
+          if (Strcmp(tm, "numeric") == 0) {
+            tmcode = NewString("is.numeric($arg)");
+          } else if (Strcmp(tm, "integer") == 0) {
+            tmcode = NewString("(is.integer($arg) || is.numeric($arg))");
+          } else if (Strcmp(tm, "character") == 0) {
+            tmcode = NewString("is.character($arg)");
+          } else {
+            if (SwigType_ispointer(Getattr(p, "type")))
+              Printf(f->code, "extends(argtypes[%d], '%s') || is.null(argv[[%d]])", j + 1, tm, j + 1);
+            else
+              Printf(f->code, "extends(argtypes[%d], '%s') && length(argv[[%d]]) == 1", j + 1, tm, j + 1);
+          }
+          if (tmcode) {
+            if (!SwigType_ispointer(Getattr(p, "type")))
+              Printf(tmcode, " && length($arg) == 1");
+            Swig_warning(WARN_R_TYPEMAP_RTYPECHECK_UNDEF,
+                         input_file,
+                         line_number,
+                         "Optional rtypecheck code is deprecated. Add the following typemap to fix as the next version of SWIG will not work without it: "
+                         "%%typemap(\"rtypecheck\") %s %%{ %s %%}\n",
+                         SwigType_str(Getattr(p, "type"), 0),
+                         tmcode);
+            String *tmp_arg = NewStringf("argv[[%d]]", j + 1);
+            Replaceall(tmcode, "$arg", tmp_arg);
+            Printv(f->code, tmcode, NIL);
+            Delete(tmp_arg);
+          }
+          Printf(f->code, " ");
+          if (num_arguments != 1)
+            Printf(f->code, ")");
+          Delete(tmcode);
+        }
+        p = Getattr(p, "tmap:in:next");
       }
       Printf(f->code, ") { f <- %s%s; }\n", sfname, overname);
     } else {
@@ -1982,25 +1963,27 @@ void R::dispatchFunctionFuture(Node *n) {
   if (cur_args != -1) {
     Printf(f->code, "};\n");
   }
-  Printf(f->code, "if (is.null(f)) {\n"
-      "stop(\"cannot find overloaded function for %s with argtypes (\","
-      "toString(argtypes),\")\");\n"
-      "}", sfname);
-      
+  Printf(f->code,
+         "if (is.null(f)) {\n"
+         "stop(\"cannot find overloaded function for %s with argtypes (\","
+         "toString(argtypes),\")\");\n"
+         "}",
+         sfname);
+
   //==============================
-  Printf(f->code,"}\nelse {\n");
+  Printf(f->code, "}\nelse {\n");
   // Some argument names are given
-  Printf(f->code,"  ta <- sapply(all_args, function(aa) sapply(argn, function(x) x %%in%% aa));\n");
-  Printf(f->code,"  if (length(argn) > 1) {\n");
-  Printf(f->code,"    ia <- which.max(colSums(ta));\n");
-  Printf(f->code,"  }\nelse {\n");
-  Printf(f->code,"    ia <- which.max(ta);\n");
-  Printf(f->code,"  }\n");
+  Printf(f->code, "  ta <- sapply(all_args, function(aa) sapply(argn, function(x) x %%in%% aa));\n");
+  Printf(f->code, "  if (length(argn) > 1) {\n");
+  Printf(f->code, "    ia <- which.max(colSums(ta));\n");
+  Printf(f->code, "  }\nelse {\n");
+  Printf(f->code, "    ia <- which.max(ta);\n");
+  Printf(f->code, "  }\n");
   Printf(f->code, " f <- get(names(all_args)[ia]);\n");
 
   Printf(f->code, "}\n");
   //==============================
-    
+
   Printv(f->code, ";\nf(...)", NIL);
   Printv(f->code, ";\n}", NIL);
   Wrapper_print(f, sfile);
@@ -2263,8 +2246,7 @@ int R::functionWrapper(Node *n) {
       }
     }
 
-
-// ================================================== [FO] START
+    // ================================================== [FO] START
 
     // Future work not yet available
     /*
@@ -2286,7 +2268,7 @@ int R::functionWrapper(Node *n) {
       Replaceall(pvalue, "::", "_");
       if (!Equal(pvc, pvalue))
         Append(pvalue, "()");
-        
+
       if (inFirstArg)
         Printf(sfun->def, "%s = %s", name, pvalue);
       else
@@ -2299,7 +2281,7 @@ int R::functionWrapper(Node *n) {
     */
     Printv(sfun->def, inFirstArg ? "" : ", ", name, NIL);
 
-// =================================================== [FO] END
+    // =================================================== [FO] END
 
     if ((tm = Getattr(p, "tmap:scheck"))) {
       Replaceall(tm, "$input", name);
@@ -3033,11 +3015,11 @@ void R::main(int argc, char *argv[]) {
       inCPlusMode = true;
       Swig_mark_arg(i);
       Printf(s_classes, "setClass('C++Reference', contains = 'ExternalReference')\n");
-// ============================== [FO] START
+      // ============================== [FO] START
     } else if (!strcmp(argv[i], "-original")) {
       original = true;
       Swig_mark_arg(i);
-// ============================== [FO] END
+      // ============================== [FO] END
     } else if (!strcmp(argv[i], "-debug")) {
       debugMode = true;
       Swig_mark_arg(i);
